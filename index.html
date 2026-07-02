@@ -14,17 +14,35 @@
         <div class="container">
             <header>
                 <h1>✨ PDF Splitter</h1>
-                <p>Upload a PDF file to extract and download its pages individually.</p>
+                <p>Upload a PDF file to extract pages individually or split it into two parts.</p>
             </header>
             
             <div class="upload-area" id="upload-area">
-                <!-- Removed 'multiple' because we split one file at a time -->
                 <input type="file" id="file-input" accept="application/pdf" style="display: none;">
                 <button class="upload-btn" id="choose-btn">Choose PDF</button>
                 <p>or drag and drop your file here</p>
             </div>
 
-            <!-- Output grid will display a card for each page -->
+            <!-- NEW: Split into Two Parts Section -->
+            <div id="range-split-container" style="display: none;" class="range-split-box">
+                <h3>✂️ Split PDF into Two Parts</h3>
+                <p>Enter the page number where the second part should start:</p>
+                
+                <div class="split-controls">
+                    <input type="number" id="split-input" min="2" placeholder="e.g., 5">
+                    <p id="split-info" class="split-info"></p>
+                </div>
+
+                <div class="split-buttons">
+                    <button id="btn-part1" class="part-btn btn-orange">Download Part 1</button>
+                    <button id="btn-part2" class="part-btn btn-purple">Download Part 2</button>
+                </div>
+
+                <hr class="divider">
+                <h3 class="extract-title">Or Extract Individual Pages</h3>
+            </div>
+
+            <!-- Output grid will display a card for each individual page -->
             <div id="output-container" class="output-grid"></div>
         </div>
     </div>
@@ -34,7 +52,7 @@
         <div class="modal-content">
             <div class="loader"></div>
             <h2>Processing...</h2>
-            <p>Please wait while we read your document.</p>
+            <p>Please wait while we process your document.</p>
         </div>
     </div>
 
