@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Splitter</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Load pdf-lib for Splitting PDFs -->
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+</head>
+<body>
+    <div class="app-wrapper">
+        <div class="container">
+            <header>
+                <h1>✨ PDF Splitter</h1>
+                <p>Upload a PDF file to extract and download its pages individually.</p>
+            </header>
+            
+            <div class="upload-area" id="upload-area">
+                <!-- Removed 'multiple' because we split one file at a time -->
+                <input type="file" id="file-input" accept="application/pdf" style="display: none;">
+                <button class="upload-btn" id="choose-btn">Choose PDF</button>
+                <p>or drag and drop your file here</p>
+            </div>
+
+            <!-- Output grid will display a card for each page -->
+            <div id="output-container" class="output-grid"></div>
+        </div>
+    </div>
+
+    <!-- Processing Modal -->
+    <div class="modal" id="processing-modal">
+        <div class="modal-content">
+            <div class="loader"></div>
+            <h2>Processing...</h2>
+            <p>Please wait while we read your document.</p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
