@@ -86,39 +86,86 @@ header p {
     font-size: 1rem;
 }
 
-/* Action Bar Styling */
-.action-bar {
+/* --- NEW: Split Range Styling --- */
+.range-split-box {
+    background: #fdfcff;
+    border: 1px solid #e0d4f5;
+    padding: 2rem;
+    border-radius: 12px;
     text-align: center;
     margin-bottom: 2rem;
 }
 
-.action-bar h3 {
+.range-split-box h3 {
     color: #554488;
     margin-bottom: 0.5rem;
 }
 
-#status-text {
-    color: #e74c3c;
-    font-weight: 600;
+.range-split-box p {
+    color: #666;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+}
+
+.split-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     margin-bottom: 1.5rem;
 }
 
-.final-btn {
-    background: linear-gradient(90deg, #ffb86c 0%, #ff9a9e 100%);
+#split-input {
+    padding: 0.8rem;
+    font-size: 1.1rem;
+    border: 2px solid #b091f0;
+    border-radius: 8px;
+    width: 120px;
+    text-align: center;
+    outline: none;
+    margin-bottom: 0.5rem;
+}
+
+#split-input:focus {
+    border-color: #8755c9;
+}
+
+.split-info {
+    font-weight: bold;
+    color: #554488 !important;
+    min-height: 20px; /* keeps layout stable when empty */
+}
+
+.split-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-bottom: 2rem;
+}
+
+.part-btn {
     color: white;
     border: none;
-    padding: 1rem 2.5rem;
-    font-size: 1.1rem;
-    font-weight: bold;
+    padding: 0.8rem 1.5rem;
     border-radius: 8px;
     cursor: pointer;
-    box-shadow: 0 4px 6px rgba(255, 184, 108, 0.4);
+    font-size: 1rem;
+    font-weight: bold;
     transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.final-btn:hover {
+.btn-orange {
+    background: linear-gradient(90deg, #ffb86c 0%, #ff9a9e 100%);
+    box-shadow: 0 4px 6px rgba(255, 184, 108, 0.4);
+}
+
+.btn-purple {
+    background: linear-gradient(90deg, #6b84ea 0%, #8755c9 100%);
+    box-shadow: 0 4px 6px rgba(107, 132, 234, 0.4);
+}
+
+.part-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(255, 184, 108, 0.5);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
 .divider {
@@ -127,6 +174,12 @@ header p {
     background: #e0d4f5;
     margin: 2rem 0;
 }
+
+.extract-title {
+    color: #554488;
+    margin-bottom: 1rem;
+}
+/* ------------------------------- */
 
 /* Output Grid (The PDF Cards) */
 .output-grid {
@@ -141,52 +194,29 @@ header p {
     border-radius: 12px;
     text-align: center;
     box-shadow: 0 4px 10px rgba(0,0,0,0.06);
-    border: 2px solid #eee;
+    border: 1px solid #eee;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
-    transition: all 0.2s;
 }
 
-/* --- NEW: PDF Preview Styling --- */
-.pdf-preview {
-    max-width: 100%;
-    height: 160px; /* Forces uniform height for all thumbnails */
-    object-fit: contain;
+.pdf-icon {
+    font-size: 3.5rem;
     margin-bottom: 1rem;
-    border: 1px solid #ddd;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    transition: opacity 0.2s, filter 0.2s;
-    background: #fff;
 }
 
 .pdf-name {
-    font-size: 1rem;
+    font-size: 0.9rem;
     color: #333;
+    word-break: break-all;
     margin-bottom: 1rem;
-    font-weight: 600;
+    font-weight: 500;
 }
 
-/* Card states */
-.pdf-card.removed-state {
-    background: #fff5f5;
-    border-color: #ffcccc;
-}
-
-.pdf-card.removed-state .pdf-name {
-    text-decoration: line-through;
-    color: #e74c3c;
-}
-
-/* Grays out the preview image when marked for removal */
-.pdf-card.removed-state .pdf-preview {
-    opacity: 0.4;
-    filter: grayscale(100%);
-}
-
-/* Card Buttons */
-.toggle-btn {
+.download-btn {
+    background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
     border: none;
     padding: 0.6rem 1rem;
     border-radius: 6px;
@@ -194,23 +224,12 @@ header p {
     font-size: 0.9rem;
     font-weight: bold;
     width: 100%;
-    transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.btn-keep {
-    background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
-    color: white;
-    box-shadow: 0 4px 8px rgba(79, 172, 254, 0.3);
-}
-
-.btn-remove {
-    background: #ff4757;
-    color: white;
-    box-shadow: 0 4px 8px rgba(255, 71, 87, 0.3);
-}
-
-.toggle-btn:hover {
+.download-btn:hover {
     transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(79, 172, 254, 0.4);
 }
 
 /* Modal Styling */
