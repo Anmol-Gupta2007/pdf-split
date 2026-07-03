@@ -3,18 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF Splitter</title>
+    <title>Remove PDF Pages</title>
     <link rel="stylesheet" href="style.css">
     
-    <!-- Load pdf-lib for Splitting PDFs -->
+    <!-- Load pdf-lib for Editing PDFs -->
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    
+    <!-- Load pdf.js for rendering actual page previews -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
 </head>
 <body>
     <div class="app-wrapper">
         <div class="container">
             <header>
-                <h1>✨ PDF Splitter</h1>
-                <p>Upload a PDF file to extract pages individually or split it into two parts.</p>
+                <h1>🗑️ Remove PDF Pages</h1>
+                <p>Upload a PDF, select the pages you want to delete, and download the updated file.</p>
             </header>
             
             <div class="upload-area" id="upload-area">
@@ -23,26 +29,15 @@
                 <p>or drag and drop your file here</p>
             </div>
 
-            <!-- NEW: Split into Two Parts Section -->
-            <div id="range-split-container" style="display: none;" class="range-split-box">
-                <h3>✂️ Split PDF into Two Parts</h3>
-                <p>Enter the page number where the second part should start:</p>
-                
-                <div class="split-controls">
-                    <input type="number" id="split-input" min="2" placeholder="e.g., 5">
-                    <p id="split-info" class="split-info"></p>
-                </div>
-
-                <div class="split-buttons">
-                    <button id="btn-part1" class="part-btn btn-orange">Download Part 1</button>
-                    <button id="btn-part2" class="part-btn btn-purple">Download Part 2</button>
-                </div>
-
+            <!-- Action bar to download the final PDF -->
+            <div id="action-bar" style="display: none;" class="action-bar">
+                <h3>Select the pages below that you want to remove.</h3>
+                <p id="status-text">0 pages selected for removal.</p>
+                <button id="download-final-btn" class="final-btn">⬇️ Download Updated PDF</button>
                 <hr class="divider">
-                <h3 class="extract-title">Or Extract Individual Pages</h3>
             </div>
 
-            <!-- Output grid will display a card for each individual page -->
+            <!-- Output grid will display a card for each page -->
             <div id="output-container" class="output-grid"></div>
         </div>
     </div>
@@ -52,7 +47,7 @@
         <div class="modal-content">
             <div class="loader"></div>
             <h2>Processing...</h2>
-            <p>Please wait while we process your document.</p>
+            <p>Please wait while we read your pages.</p>
         </div>
     </div>
 
