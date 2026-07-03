@@ -1,20 +1,18 @@
-// Store the loaded document data globally
+// Global State
 let originalFileBytes = null;
 let originalFileName = "";
 let totalPages = 0;
+let pagesToRemove = new Set(); 
 
 // --- UI Elements ---
 const uploadArea = document.getElementById('upload-area');
 const fileInput = document.getElementById('file-input');
 const chooseBtn = document.getElementById('choose-btn');
 const outputContainer = document.getElementById('output-container');
-const rangeSplitContainer = document.getElementById('range-split-container');
+const actionBar = document.getElementById('action-bar');
+const statusText = document.getElementById('status-text');
+const downloadFinalBtn = document.getElementById('download-final-btn');
 const modal = document.getElementById('processing-modal');
-
-const splitInput = document.getElementById('split-input');
-const splitInfo = document.getElementById('split-info');
-const btnPart1 = document.getElementById('btn-part1');
-const btnPart2 = document.getElementById('btn-part2');
 
 // --- Helper: Download Function ---
 function download(data, filename, type) {
@@ -72,22 +70,21 @@ async function processFile(file) {
 
     modal.style.display = 'flex';
     originalFileName = file.name.replace('.pdf', '');
+    pagesToRemove.clear(); 
 
     try {
         originalFileBytes = await file.arrayBuffer();
         
+        // 1. Get total pages using pdf-lib
         const { PDFDocument } = PDFLib;
         const pdfDoc = await PDFDocument.load(originalFileBytes);
-        
         totalPages = pdfDoc.getPageCount();
         
-        // Show the UI elements now that we have a file
-        rangeSplitContainer.style.display = 'block';
-        splitInput.max = totalPages;
-        splitInput.value = '';
-        splitInfo.innerText = `Total Pages: ${totalPages}`;
+        actionBar.style.display = 'block';
+        updateStatusText();
         
-        renderUI();
+        // 2. Render the visual previews using pdf.js
+        await renderPreviews();
 
     } catch (error) {
         console.error("Error reading PDF:", error);
@@ -97,97 +94,101 @@ async function processFile(file) {
     modal.style.display = 'none';
 }
 
-// --- NEW: Split into 2 Parts Logic ---
-
-// Update text when user types a page number
-splitInput.addEventListener('input', () => {
-    const val = parseInt(splitInput.value);
-    if (!val || val < 2 || val > totalPages) {
-        splitInfo.innerText = `Please enter a valid number between 2 and ${totalPages}.`;
-    } else {
-        splitInfo.innerText = `Part 1: Pages 1 to ${val - 1} | Part 2: Pages ${val} to ${totalPages}`;
-    }
-});
-
-// Download Part 1
-btnPart1.addEventListener('click', () => downloadSplitPart(1));
-
-// Download Part 2
-btnPart2.addEventListener('click', () => downloadSplitPart(2));
-
-async function downloadSplitPart(partNumber) {
-    if (!originalFileBytes) return;
-
-    const splitVal = parseInt(splitInput.value);
-    if (isNaN(splitVal) || splitVal < 2 || splitVal > totalPages) {
-        alert(`Please enter a valid page number to split at (between 2 and ${totalPages}).`);
-        return;
-    }
-
-    modal.style.display = 'flex';
-
-    try {
-        const { PDFDocument } = PDFLib;
-        const originalDoc = await PDFDocument.load(originalFileBytes);
-        const newDoc = await PDFDocument.create();
-        
-        let startIdx, endIdx;
-        
-        if (partNumber === 1) {
-            // If splitting AT page 5, Part 1 is pages 1 to 4 (Indices 0 to 3)
-            startIdx = 0;
-            endIdx = splitVal - 2; 
-        } else {
-            // Part 2 is pages 5 to total (Indices 4 to total-1)
-            startIdx = splitVal - 1;
-            endIdx = totalPages - 1;
-        }
-
-        // Gather the specific page indices we want
-        const indicesToCopy = [];
-        for (let i = startIdx; i <= endIdx; i++) {
-            indicesToCopy.push(i);
-        }
-
-        // Copy and add to new doc
-        const copiedPages = await newDoc.copyPages(originalDoc, indicesToCopy);
-        copiedPages.forEach((page) => newDoc.addPage(page));
-
-        // Save and Trigger Download
-        const newPdfBytes = await newDoc.save();
-        
-        const label = partNumber === 1 ? `Pages_1_to_${splitVal - 1}` : `Pages_${splitVal}_to_${totalPages}`;
-        download(newPdfBytes, `${originalFileName}_${label}.pdf`, "application/pdf");
-        
-    } catch (error) {
-        console.error("Error splitting part:", error);
-        alert("Failed to split PDF.");
-    }
-    
-    modal.style.display = 'none';
-}
-
-// --- Extract and Download Individual Specific Pages (Existing UI) ---
-function renderUI() {
+// --- Render Visual Page Previews ---
+async function renderPreviews() {
     outputContainer.innerHTML = '';
+
+    // Load the document for viewing in pdf.js
+    const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(originalFileBytes) });
+    const pdfViewerDoc = await loadingTask.promise;
 
     for (let i = 0; i < totalPages; i++) {
         const card = document.createElement('div');
         card.className = 'pdf-card';
+        card.id = `page-card-${i}`;
 
+        // Create the card with an empty canvas
         card.innerHTML = `
-            <div class="pdf-icon">📄</div>
+            <canvas id="canvas-${i}" class="pdf-preview"></canvas>
             <div class="pdf-name">Page ${i + 1}</div>
-            <button class="download-btn" onclick="extractPage(${i})">⬇ Download</button>
+            <button id="btn-${i}" class="toggle-btn btn-keep" onclick="togglePage(${i})">✔️ Keep Page</button>
         `;
         
         outputContainer.appendChild(card);
+
+        // Render the PDF page onto the canvas
+        try {
+            const page = await pdfViewerDoc.getPage(i + 1);
+            const canvas = document.getElementById(`canvas-${i}`);
+            const context = canvas.getContext('2d');
+            
+            // Calculate scale (so the internal resolution matches our 160px height CSS)
+            const unscaledViewport = page.getViewport({ scale: 1 });
+            const scale = 160 / unscaledViewport.height; 
+            const viewport = page.getViewport({ scale: scale });
+            
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            
+            await page.render({
+                canvasContext: context,
+                viewport: viewport
+            }).promise;
+            
+        } catch (err) {
+            console.error("Error rendering page", i, err);
+        }
     }
 }
 
-window.extractPage = async function(pageIndex) {
-    if (!originalFileBytes) return;
+// --- Instant Toggle Page State ---
+window.togglePage = function(pageIndex) {
+    const card = document.getElementById(`page-card-${pageIndex}`);
+    const btn = document.getElementById(`btn-${pageIndex}`);
+
+    if (pagesToRemove.has(pageIndex)) {
+        // Restore the page
+        pagesToRemove.delete(pageIndex); 
+        card.classList.remove('removed-state');
+        btn.className = 'toggle-btn btn-keep';
+        btn.innerHTML = '✔️ Keep Page';
+    } else {
+        // Mark for removal
+        pagesToRemove.add(pageIndex); 
+        card.classList.add('removed-state');
+        btn.className = 'toggle-btn btn-remove';
+        btn.innerHTML = '❌ Removed';
+    }
     
+    updateStatusText();
+}
+
+function updateStatusText() {
+    statusText.innerText = `${pagesToRemove.size} page(s) selected for removal out of ${totalPages}.`;
+    
+    if (pagesToRemove.size === totalPages) {
+        statusText.innerText += " (You cannot remove all pages!)";
+        statusText.style.color = "red";
+    } else if (pagesToRemove.size > 0) {
+        statusText.style.color = "#e74c3c";
+    } else {
+        statusText.style.color = "#554488";
+    }
+}
+
+// --- Generate and Download Final PDF ---
+downloadFinalBtn.addEventListener('click', async () => {
+    if (!originalFileBytes) return;
+
+    if (pagesToRemove.size === totalPages) {
+        alert("You cannot remove all pages from the document. Please keep at least one page.");
+        return;
+    }
+
+    if (pagesToRemove.size === 0) {
+        alert("You haven't selected any pages to remove. The document is unchanged.");
+    }
+
     modal.style.display = 'flex';
 
     try {
@@ -195,16 +196,26 @@ window.extractPage = async function(pageIndex) {
         const originalDoc = await PDFDocument.load(originalFileBytes);
         const newDoc = await PDFDocument.create();
         
-        const [copiedPage] = await newDoc.copyPages(originalDoc, [pageIndex]);
-        newDoc.addPage(copiedPage);
+        // Figure out which pages to KEEP
+        const indicesToKeep = [];
+        for (let i = 0; i < totalPages; i++) {
+            if (!pagesToRemove.has(i)) {
+                indicesToKeep.push(i);
+            }
+        }
 
+        // Copy only the kept pages
+        const copiedPages = await newDoc.copyPages(originalDoc, indicesToKeep);
+        copiedPages.forEach((page) => newDoc.addPage(page));
+
+        // Save and Trigger Download
         const newPdfBytes = await newDoc.save();
-        download(newPdfBytes, `${originalFileName}_Page_${pageIndex + 1}.pdf`, "application/pdf");
+        download(newPdfBytes, `${originalFileName}_PagesRemoved.pdf`, "application/pdf");
         
     } catch (error) {
-        console.error("Error extracting page:", error);
-        alert("Failed to extract page.");
+        console.error("Error creating updated PDF:", error);
+        alert("Failed to remove pages and create PDF.");
     }
-
+    
     modal.style.display = 'none';
-}
+});
